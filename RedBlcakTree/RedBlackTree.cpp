@@ -99,7 +99,7 @@ private:
 
     if(_root == fp)
     {
-      _root == p;
+      _root = p;
     }
     p->_parent = gp;
 
@@ -136,6 +136,42 @@ private:
       return p; 
     return Getsmall_child(p->_left); 
   }
+   
+  void delete_one_child(BstNode* p)
+  {
+    BstNode* child = p->_left == _nil ? p->_left : p->_right;
+
+    if(p->_parent  == NULL && p->_left == _nil && p->_right == _nil)
+    {
+      p = NULL;
+      _root =p;
+      return;
+    }
+    if(p->_parent == NULL)
+    {
+      delete p;
+      child->_parent = NULL;
+      _root = child;
+      _root->_color = Black;
+      return;
+    }
+
+    if(p->_parent->_left == p)
+      p->_parent->_right = child;
+    else 
+      p->_parent->_left = child;
+
+    child->_parent = p->_parent;
+
+    if(p->_color == Black)
+    {
+      if(child->_color == Red)
+        child->_color = Black;
+      else 
+        delete_case(child);
+    }
+    delete p;
+  }
 
   bool delete_child(BstNode* p,int data)
   {
@@ -169,44 +205,69 @@ private:
       return false;
   }
 
-  void delete_one_child(BstNode* p)
+  
+
+  void delete_case(BstNode *p)
   {
-    BstNode* child = p->_left == _nil ? p->_left : p->_right;
+        if(p->_parent == NULL){
+            p->_color = Black;
+            return;
+        }
+        if(p->Brother()->_color == Red) 
+        {
+            p->_parent->_color = Red;
+            p->Brother()->_color = Black;
+            if(p == p->_parent->_left)
+                Rotate_left(p->Brother());
+            else
+                Rotate_right(p->Brother());
+        }
 
-    if(p->_parent  == NULL && p->_left = _nil && p->_right == _nil)
-    {
-      p = NULL;
-      _root =p;
-      return;
+        if(p->_parent->_color == Black && p->Brother()->_color == Black
+  && p->Brother()->_left->_color == Black && p->Brother()->_right->_color == Black)
+        {
+            p->Brother()->_color = Red;
+            delete_case(p->_parent);
+        } 
+        else if(p->_parent->_color == Red && p->Brother()->_color == Black
+ && p->Brother()->_left->_color == Black && p->Brother()->_right->_color == Black)
+        {
+            p->Brother()->_color = Red;
+            p->_parent->_color = Black;
+        } 
+        else 
+        {
+            if(p->Brother()->_color == Black)
+            {
+                if(p == p->_parent->_left && p->Brother()->_left->_color == Red
+                        && p->Brother()->_right->_color == Black)
+                {
+                    p->Brother()->_color = Red;
+                    p->Brother()->_left->_color = Black;
+                    Rotate_right(p->Brother()->_left);
+                } 
+                else if(p == p->_parent->_right && p->Brother()->_left->_color == Black
+                        && p->Brother()->_right->_color == Red)
+                {
+                    p->Brother()->_color = Red;
+                    p->Brother()->_right->_color = Black;
+                    Rotate_left(p->Brother()->_right);
+                }
+            }
+            p->Brother()->_color = p->_parent->_color;
+            p->_parent->_color = Black;
+            if(p == p->_parent->_left)
+            {
+                p->Brother()->_right->_color = Black;
+                Rotate_left(p->Brother());
+            } 
+            else 
+            {
+                p->Brother()->_left->_color = Black;
+                Rotate_right(p->Brother());
+            }
+        }
     }
-    if(p->_parent == NULL)
-    {
-      delete p;
-      child->_parent = NULL;
-      _root = child;
-      _root->_color = Black;
-      return;
-    }
-
-    if(p->_parent->_left == p)
-      p->_parent->_right = child;
-    else 
-      p->_parent->_left = child;
-
-    child->_parent = p->_parent;
-
-    if(p->_color == Black)
-    {
-      if(child->_color = Red)
-        child->_color = Black;
-      else 
-        delete_case(child);
-    }
-    delete p;
-  }
-
-  void delete_case(BstNode* p)
-  {}
 
   void insert(BstNode* p,int data)
   {
@@ -232,7 +293,7 @@ private:
       {
         BstNode* tmp = new BstNode();
         tmp->_data = data;
-        tmp->_left = tmp->right = _nil;
+        tmp->_left = tmp->_right = _nil;
         tmp->_parent = p;
         p->_right = tmp;
         insert_case(tmp);
@@ -240,8 +301,62 @@ private:
     }
   }
 
-  void insert_case(BstNode* p)
-  {}
+  void insert_case(BstNode *p)
+  {
+        if(p->_parent == NULL)
+        {
+            _root = p;
+            p->_color = Black;
+            return;
+        }
+        if(p->_parent->_color == Red)
+        {
+            if(p->Uncle()->_color == Red)
+            {
+                p->_parent->_color = p->Uncle()->_color = Black;
+                p->GrandParent()->_color = Red;
+                insert_case(p->GrandParent()); 
+            } 
+            else
+            {
+                if(p->_parent->_right == p && p->GrandParent()->_left == p->_parent)
+                {
+                    Rotate_left (p);
+                    Rotate_right (p);
+                    p->_color = Black;
+                    p->_left->_color = p->_right->_color = Red;
+                } 
+                else if(p->_parent->_left == p && p->GrandParent()->_right == p->_parent) 
+                {
+                    Rotate_right (p);
+                    Rotate_left (p);
+                    p->_color = Black;
+                    p->_left->_color = p->_right->_color = Red;
+                } 
+                else if(p->_parent->_left == p && p->GrandParent()->_left == p->_parent)    
+                {
+                    p->_parent->_color = Black;
+                    p->GrandParent()->_color = Red;
+                    Rotate_right(p->_parent);
+                } 
+                else if(p->_parent->_right == p && p->GrandParent()->_right == p->_parent) 
+                {
+                    p->_parent->_color = Black;
+                    p->GrandParent()->_color = Red;
+                    Rotate_left(p->_parent);
+                }
+            }
+        }
+    }
+  
+  void DeleteTree(BstNode* p)
+  {
+    if(!p || p == _nil)
+      return;
+    DeleteTree(p->_left);
+    DeleteTree(p->_right);
+    delete p;
+  }
 
 public:
   BstTree()
@@ -265,7 +380,7 @@ public:
   {
     if(_root == NULL)
     {
-      _root = new Node();
+      _root = new BstNode();
       _root->_color = Black;
       _root->_left = _root->_right = _nil;
       _root->_data = data;
